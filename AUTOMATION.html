@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MARV & CO – Compliance Automation</title>
+
+<style>
+/* ===== STYLES ===== */
+body {
+    margin: 0;
+    font-family: "Inter", "Segoe UI", Arial, sans-serif;
+    background: #faf8f0;
+    color: #1c1c1e;
+    transition: background 0.3s, color 0.3s;
+}
+header {
+    padding: 24px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.logo {
+    height: 60px;
+}
+.hero {
+    text-align: center;
+    margin-top: 60px;
+}
+.hero h1 {
+    font-size: 34px;
+    font-weight: 700;
+}
+.hero .brand {
+    color: #2f9e44;
+}
+.hero p {
+    font-size: 16px;
+    color: #555;
+}
+.tiles {
+    max-width: 1100px;
+    margin: 50px auto;
+    padding: 0 30px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 24px;
+}
+.tile {
+    background: #fff;
+    border-radius: 14px;
+    padding: 26px;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+    transition: transform 0.25s, box-shadow 0.25s;
+}
+.tile:hover, .tile:focus {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+    outline: 3px solid #2f9e44;
+}
+footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 13px;
+    opacity: 0.6;
+}
+.dark {
+    background: #0f1412;
+    color: #e6e6e6;
+}
+.dark .tile {
+    background: #161c19;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    
+    <button onclick="toggleTheme()" aria-label="Toggle Dark Mode">🌙</button>
+</header>
+
+<div class="hero">
+    <h1>Welcome to <span class="brand">MARV & CO</span></h1>
+    <p>Chartered Accountants – Compliance Automation Platform</p>
+</div>
+
+<div class="tiles">
+    <a href="tools/oneui.html" class="tile">Documents for MCA Annual compliance for companies. Eg: Directors report etc.</a>
+    <a href="tools/Board Resolution.html" class="tile">Board Resolutions required for companies  </a>
+    <a href="tools/managementrepresentationletter.html" class="tile">Audit, Management representation letter etc</a>
+    <a href="#" class="tile">COMING SOON</a>
+    <a href="#" class="tile">COMING SOON (Coming Soon)</a>
+</div>
+
+<footer>© MARV & CO – Chartered Accountants</footer>
+
+<script>
+function toggleTheme() {
+    document.body.classList.toggle("dark");
+}
+</script>
+
+</body>
+</html>
