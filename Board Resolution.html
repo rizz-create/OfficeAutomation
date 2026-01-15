@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LegalDraft | Automated Resolution Engine</title>
+    <!-- HTML2PDF for PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- CORE VARIABLES --- */
+        :root {
+            /* Brand Colors */
+            --brand-primary: #4f46e5; /* Indigo 600 */
+            --brand-primary-hover: #4338ca; /* Indigo 700 */
+            --brand-secondary: #0ea5e9; /* Sky 500 */
+            
+            /* UI Colors */
+            --bg-app: #f1f5f9; /* Slate 100 */
+            --bg-panel: #ffffff;
+            --border-color: #e2e8f0; /* Slate 200 */
+            
+            /* Text Colors */
+            --text-main: #0f172a; /* Slate 900 */
+            --text-muted: #64748b; /* Slate 500 */
+            --text-on-dark: #ffffff;
+
+            /* Document Specifics */
+            --doc-bg: #ffffff;
+            --doc-text: #1e293b;
+            --highlight: #e0e7ff; /* Light Indigo */
+
+            /* Spacing & Radius */
+            --radius-sm: 6px;
+            --radius-md: 12px;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-app);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- SIDEBAR PANEL (The Control Center) --- */
+        #automation-sidebar {
+            width: 400px;
+            background-color: var(--bg-panel);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border-color);
+            background: linear-gradient(to right, #ffffff, #f8fafc);
+        }
+
+        .brand-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .brand-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--brand-primary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .sidebar-header h2 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: -0.025em;
+        }
+
+        /* Dropdown Styling */
+        select#resolution-selector {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            background-color: var(--bg-app);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            color: var(--text-main);
+            cursor: pointer;
+        }
+        
+        select#resolution-selector:focus {
+            outline: 2px solid var(--brand-primary);
+            border-color: transparent;
+            background-color: #fff;
+        }
+
+        .sidebar-content {
+            padding: 24px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        /* Section Headers in Sidebar */
+        h3 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-top: 24px;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        /* Form Inputs */
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.8rem;
+            margin-bottom: 6px;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            background-color: #fff;
+            color: var(--text-main);
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--brand-primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        
+        .input-group input::placeholder {
+            color: #cbd5e1;
+        }
+
+        /* Sidebar Footer */
+        .sidebar-footer {
+            padding: 20px 24px;
+            background-color: var(--bg-panel);
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* Buttons */
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .action-btn {
+            padding: 12px;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-word {
+            background-color: white;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+        
+        .btn-word:hover {
+            background-color: var(--bg-app);
+            border-color: #cbd5e1;
+        }
+
+        .btn-pdf {
+            background-color: var(--brand-primary);
+            color: white;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .btn-pdf:hover {
+            background-color: var(--brand-primary-hover);
+            transform: translateY(-1px);
+        }
+
+        /* --- MAIN PREVIEW AREA --- */
+        #main-content {
+            flex-grow: 1;
+            padding: 40px;
+            overflow-y: auto;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            background-image: 
+                radial-gradient(var(--border-color) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        .document-container {
+            width: 100%;
+            max-width: 800px; /* A4-ish width */
+            background: var(--doc-bg);
+            padding: 60px 70px; /* Generous margins like real paper */
+            box-shadow: var(--shadow-xl);
+            min-height: 1000px;
+            position: relative;
+            margin-bottom: 40px;
+            color: var(--doc-text);
+        }
+
+        /* Typography inside Document */
+        .document-container h1, 
+        .document-container h2, 
+        .document-container h3, 
+        .document-container h4, 
+        .document-container p, 
+        .document-container li {
+            font-family: 'Merriweather', serif;
+        }
+
+        #doc-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        #doc-header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            color: #000;
+            text-transform: uppercase;
+            border: none;
+            padding: 0;
+        }
+        
+        #doc-header h1::after { display: none; } /* Remove old underline */
+
+        #doc-header hr {
+            border: 0;
+            height: 1px;
+            background: #000;
+            margin-top: 20px;
+        }
+
+        /* Welcome Screen Styling */
+        #welcome-screen {
+            text-align: center;
+            padding: 80px 40px;
+            background: var(--bg-app);
+            border-radius: var(--radius-md);
+            border: 2px dashed var(--border-color);
+            margin-top: 40px;
+        }
+        
+        #welcome-screen h3 {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.5rem;
+            color: var(--text-main);
+            text-transform: none;
+            border: none;
+            margin-bottom: 10px;
+        }
+        
+        #welcome-screen h3::after { display: none; }
+        
+        #welcome-screen p {
+            font-family: 'Inter', sans-serif;
+            color: var(--text-muted);
+        }
+
+        /* Resolution Content Styling */
+        article.resolution {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        article.resolution.active {
+            display: block;
+        }
+
+        article.resolution h3 {
+            font-family: 'Inter', sans-serif; /* Keep headers sans-serif for structure */
+            font-size: 1rem;
+            color: var(--brand-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+        
+        article.resolution h3::after { display: none; }
+
+        /* Context Boxes (Metadata) */
+        .metadata, .pre-resolution-context, .explanatory-notes {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 15px;
+            margin-bottom: 25px;
+            font-family: 'Inter', sans-serif; /* Context is UI info, not legal text */
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        
+        .metadata strong, .pre-resolution-context strong {
+            color: var(--text-main);
+        }
+
+        /* The Actual Resolution Text */
+        .resolution-text {
+            font-family: 'Merriweather', serif;
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #1a1a1a;
+            text-align: justify;
+            margin-bottom: 40px;
+            padding: 0; /* Remove box styling */
+            background: transparent;
+            border: none;
+            box-shadow: none;
+        }
+        
+        .resolution-text p {
+            margin-bottom: 20px;
+        }
+
+        /* Dynamic Values Highlight */
+        .dynamic-value {
+            background-color: rgba(99, 102, 241, 0.1);
+            color: var(--brand-primary);
+            font-weight: 600;
+            padding: 2px 4px;
+            border-radius: 4px;
+            border-bottom: 1px dashed var(--brand-primary);
+        }
+        
+        /* When value is filled, remove highlight style */
+        .dynamic-value:not(:empty):not([data-empty="true"]) {
+           /* Logic handled in JS to change color, but we can style base here */
+        }
+
+        .signature-block {
+            margin-top: 60px;
+            text-align: right;
+            font-family: 'Merriweather', serif;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- PRINT STYLES --- */
+        @media print {
+            body { height: auto; overflow: visible; background: white; }
+            #automation-sidebar { display: none !important; }
+            #main-content { padding: 0; background: none; }
+            .document-container { 
+                box-shadow: none; 
+                padding: 0; 
+                max-width: 100%; 
+                width: 100%;
+            }
+            .metadata, .pre-resolution-context { display: none; } /* Clean print */
+            .dynamic-value { 
+                background: none; 
+                color: black; 
+                border: none; 
+                padding: 0; 
+                font-weight: normal; 
+            }
+        }
+
+        /* Mobile */
+        @media (max-width: 900px) {
+            body { flex-direction: column; overflow: auto; }
+            #automation-sidebar { width: 100%; height: auto; max-height: 40vh; border-right: none; border-bottom: 1px solid var(--border-color); }
+            #main-content { padding: 20px; }
+            .document-container { padding: 30px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <div id="automation-sidebar">
+        <div class="sidebar-header">
+            <div class="brand-title">
+                <div class="brand-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                </div>
+                <h2>LegalDraft</h2>
+            </div>
+            
+            <label style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; display: block; margin-bottom: 8px;">SELECT TEMPLATE</label>
+            <select id="resolution-selector">
+                <option value="">-- Select a Resolution --</option>
+                <!-- Populated by JS -->
+            </select>
+        </div>
+        
+        <div class="sidebar-content">
+            <div id="common-fields">
+                <h3>Company Profile</h3>
+                <!-- Injected by JS -->
+            </div>
+            
+            <div id="specific-fields-container" style="display:none;">
+                <h3>Resolution Specifics</h3>
+                <div id="specific-fields">
+                    <!-- Injected by JS based on selection -->
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="btn-group">
+                <button class="action-btn btn-word" onclick="downloadWord()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    <span>Word</span>
+                </button>
+                <button class="action-btn btn-pdf" onclick="downloadPDF()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    <span>Download PDF</span>
+                </button>
+            </div>
+            <div style="margin-top: 15px; text-align: center; font-size: 0.75rem; color: var(--text-muted); border-top: 1px solid var(--border-color); padding-top: 15px;">
+                &copy; Created by Marv and co Chartered Accountants<br>
+                
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN DISPLAY -->
+    <div id="main-content">
+        <div class="document-container" id="document-view">
+            
+            <header id="doc-header">
+                <h1>CERTIFIED TRUE COPY</h1>
+                <p style="text-align: center; font-family: 'Merriweather', serif; font-style: italic; color: #444;">Resolution passed at the meeting of the Board of Directors of</p>
+                <p style="text-align: center; font-size: 1.4em; font-weight: bold; margin: 10px 0;">
+                    <span class="dynamic-text" data-key="COMPANY_NAME">{{COMPANY_NAME}}</span>
+                </p>
+                <p style="text-align: center; font-size: 0.9em;">(CIN: <span class="dynamic-text" data-key="CIN">{{CIN}}</span>)</p>
+                <hr>
+            </header>
+
+            <div id="welcome-screen">
+                <div style="margin-bottom: 20px; color: var(--border-color);">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+                </div>
+                <h3>Start Drafting</h3>
+                <p>Select a template from the sidebar to generate a legal resolution.</p>
+            </div>
+
+            <!-- RESOLUTIONS -->
+            <!-- CATEGORY 1: AUDIT & FINANCE -->
+            <article class="resolution" id="res-first-auditor" data-title="Appointment of First Auditor">
+                <div class="metadata">
+                    <strong>SUBJECT:</strong> Appointment of First Statutory Auditor<br>
+                    <strong>SECTION:</strong> 139 of Companies Act, 2013
+                </div>
+                <div class="pre-resolution-context">
+                    <strong>MEETING DETAILS:</strong><br>
+                    Held on {{MEETING_DATE}} at {{MEETING_TIME}} at {{MEETING_VENUE}}.<br>
+                    Chaired by: {{CHAIRPERSON_NAME}}
+                </div>
+                <div class="resolution-text">
+                    <p>“<strong>RESOLVED THAT</strong> in terms of section 139 of Companies Act 2013, other applicable provisions and the relevant rules made thereunder, {{AUDITOR_FIRM_NAME}} having FRN: {{FRN_NUMBER}} is hereby appointed as the first auditor of the company to hold office until the conclusion of first annual general meeting of the company on such remuneration as fixed by the board of directors.</p>
+                    <p><strong>FURTHER RESOLVED THAT</strong> {{DIRECTOR_NAME}} (DIN: {{DIRECTOR_DIN}}) director of the company is hereby authorised to file necessary e-forms with the registrar of companies and to do all such acts which are necessary to give effect to the above resolution on behalf of company.”</p>
+                </div>
+                <div class="signature-block">
+                    <p>For {{COMPANY_NAME}}</p>
+                    <br><br><br>
+                    <p><strong>{{SIGNING_AUTHORITY_NAME}}</strong><br>{{SIGNING_AUTHORITY_DESIGNATION}}<br>DIN: {{SIGNING_AUTHORITY_DIN}}</p>
+                </div>
+            </article>
+
+            <article class="resolution" id="res-regular-auditor" data-title="Appointment of Regular Auditor">
+                <div class="metadata">
+                    <strong>SUBJECT:</strong> Appointment of Statutory Auditor<br>
+                    <strong>SECTION:</strong> 139 of Companies Act, 2013
+                </div>
+                <div class="pre-resolution-context">
+                    <strong>MEETING DETAILS:</strong><br>
+                    Held on {{MEETING_DATE}} at {{MEETING_TIME}} at {{MEETING_VENUE}}.
+                </div>
+                <div class="resolution-text">
+                    <p>“<strong>RESOLVED THAT</strong> pursuant to the recommendations of the Audit Committee and in accordance with the provisions of Section 139 of the Companies Act, 2013 and the rules made thereunder, M/s. {{AUDITOR_FIRM_NAME}}, Chartered Accountants (Firm Registration No. {{FRN_NUMBER}}), be and are hereby appointed as the Statutory Auditors of the Company to hold office from the conclusion of this Annual General Meeting until the conclusion of the {{NUMBER_OF_YEARS}} consecutive Annual General Meeting, on a remuneration of Rs. {{AUDITOR_REMUNERATION}} (exclusive of applicable taxes and out-of-pocket expenses) for the financial year {{FINANCIAL_YEAR}}.</p>
+                    <p><strong>FURTHER RESOLVED THAT</strong> the Board be and is hereby authorized to fix their remuneration for the subsequent years, subject to the approval of the members in the respective Annual General Meetings.”</p>
+                </div>
+                <div class="signature-block">
+                    <p>For {{COMPANY_NAME}}</p>
+                    <br><br><br>
+                    <p><strong>{{SIGNING_AUTHORITY_NAME}}</strong><br>{{SIGNING_AUTHORITY_DESIGNATION}}<br>DIN: {{SIGNING_AUTHORITY_DIN}}</p>
+                </div>
+            </article>
+
+            <article class="resolution" id="res-casual-vacancy-auditor" data-title="Casual Vacancy of Auditor">
+                <div class="metadata">
+                    <strong>SUBJECT:</strong> Filling Casual Vacancy in the Office of Auditor<br>
+                    <strong>SECTION:</strong> 139(8) of Companies Act, 2013
+                </div>
+                <div class="pre-resolution-context">
+                    <strong>MEETING DETAILS:</strong><br>
+                    Held on {{MEETING_DATE}} at {{MEETING_TIME}} at {{MEETING_VENUE}}.<br>
+                    Chaired by: {{CHAIRPERSON_NAME}}
+                </div>
+                <div class="resolution-text">
+                    <p>“<strong>RESOLVED THAT</strong> pursuant to the provisions of Section 139(8) of the Companies Act, 2013 and the rules made thereunder, M/s. {{NEW_AUDITOR_FIRM_NAME}}, Chartered Accountants (Firm Registration No. {{NEW_FRN_NUMBER}}), be and are hereby appointed to fill the casual vacancy caused by the resignation of the previous statutory auditors, M/s. {{PREVIOUS_AUDITOR_FIRM_NAME}}, to hold office until the conclusion of the next Annual General Meeting of the Company.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> the remuneration payable to M/s. {{NEW_AUDITOR_FIRM_NAME}} shall be Rs. {{AUDITOR_REMUNERATION}} (exclusive of applicable taxes and out-of-pocket expenses) for the financial year {{FINANCIAL_YEAR}}.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> the Board of Directors be and is hereby authorized to do all such acts, deeds and things as may be necessary to give effect to this resolution, including filing of necessary forms with the Registrar of Companies.”</p>
+                </div>
+                <div class="signature-block">
+                    <p>For {{COMPANY_NAME}}</p>
+                    <br><br><br>
+                    <p><strong>{{SIGNING_AUTHORITY_NAME}}</strong><br>{{SIGNING_AUTHORITY_DESIGNATION}}<br>DIN: {{SIGNING_AUTHORITY_DIN}}</p>
+                </div>
+            </article>
+
+            <article class="resolution" id="res-internal-auditor" data-title="Appointment of Internal Auditor">
+                <div class="metadata">
+                    <strong>SUBJECT:</strong> Appointment of Internal Auditor<br>
+                    <strong>SECTION:</strong> 138 of Companies Act, 2013
+                </div>
+                <div class="pre-resolution-context">
+                    <strong>MEETING DETAILS:</strong><br>
+                    Date: {{MEETING_DATE}}
+                </div>
+                <div class="resolution-text">
+                    <p>“<strong>RESOLVED THAT</strong> pursuant to the provisions of Section 138 of the Companies Act, 2013 read with the Companies (Accounts) Rules, 2014, M/s. {{INTERNAL_AUDITOR_NAME}}, {{INTERNAL_AUDITOR_QUALIFICATION}}, be and is hereby appointed as the Internal Auditor of the Company for the financial year {{FINANCIAL_YEAR}} to conduct the internal audit of the functions and activities of the Company.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> the remuneration payable to M/s. {{INTERNAL_AUDITOR_NAME}} for the said internal audit shall be Rs. {{INTERNAL_AUDITOR_REMUNERATION}} (exclusive of applicable taxes and out-of-pocket expenses).</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> the Board of Directors of the Company be and is hereby authorized to do all such acts, deeds and things as may be necessary to give effect to this resolution.”</p>
+                </div>
+                <div class="signature-block">
+                    <p>For {{COMPANY_NAME}}</p>
+                    <br><br><br>
+                    <p><strong>{{SIGNING_AUTHORITY_NAME}}</strong><br>{{SIGNING_AUTHORITY_DESIGNATION}}<br>DIN: {{SIGNING_AUTHORITY_DIN}}</p>
+                </div>
+            </article>
+
+            <!-- CATEGORY 2: CORPORATE GOVERNANCE -->
+            <article class="resolution" id="res-common-seal" data-title="Adoption of Common Seal">
+                <div class="metadata">
+                    <strong>SUBJECT:</strong> Adoption of Common Seal
+                </div>
+                <div class="pre-resolution-context">
+                    <strong>MEETING DETAILS:</strong><br>
+                    Date: {{MEETING_DATE}} | Venue: {{MEETING_VENUE}}
+                </div>
+                <div class="resolution-text">
+                    <p>“<strong>RESOLVED THAT</strong> the seal submitted to this meeting, an impression whereof has been made in the margin of the minutes of this meeting, be and is hereby approved and adopted as the Common Seal of the Company.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> the said Common Seal be kept in the safe custody of {{CUSTODIAN_NAME}}, Director/Company Secretary of the Company.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> the Common Seal shall not be affixed to any instrument except by the authority of a resolution of the Board or a Committee of the Board authorised by it in that behalf, and except in the presence of {{NUMBER_OF_DIRECTORS}} Director(s), who shall sign every instrument to which the seal of the Company is so affixed in their presence.”</p>
+                </div>
+                <div class="signature-block">
+                    <p>For {{COMPANY_NAME}}</p>
+                    <br><br><br>
+                    <p><strong>{{SIGNING_AUTHORITY_NAME}}</strong><br>{{SIGNING_AUTHORITY_DESIGNATION}}<br>DIN: {{SIGNING_AUTHORITY_DIN}}</p>
+                </div>
+            </article>
+
+            <article class="resolution" id="res-mbp1" data-title="Noting Form MBP-1 (Interest)">
+                <div class="metadata">
+                    <strong>SUBJECT:</strong> Noting Disclosure of Interest (Form MBP-1)
+                </div>
+                <div class="pre-resolution-context">
+                    <strong>MEETING DETAILS:</strong><br>
+                    Date: {{MEETING_DATE}} | Venue: {{MEETING_VENUE}}
+                </div>
+                <div class="resolution-text">
+                    <p>“<strong>RESOLVED THAT</strong> the notices of disclosure of interest in Form MBP-1 received from the Directors of the Company pursuant to Section 184(1) of the Companies Act, 2013, disclosing their concern or interest in other companies, bodies corporate, firms, or other association of individuals, be and are hereby noted and taken on record.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> the Company Secretary/Authorised Director be and is hereby authorised to make necessary entries in the Register of Contracts or Arrangements in which Directors are interested (Form MBP-4) maintained under Section 189 of the Companies Act, 2013.”</p>
+                </div>
+                <div class="signature-block">
+                    <p>For {{COMPANY_NAME}}</p>
+                    <br><br><br>
+                    <p><strong>{{SIGNING_AUTHORITY_NAME}}</strong><br>{{SIGNING_AUTHORITY_DESIGNATION}}<br>DIN: {{SIGNING_AUTHORITY_DIN}}</p>
+                </div>
+            </article>
+
+            <article class="resolution" id="res-add-dir" data-title="Appoint Additional Director">
+                <div class="metadata">
+                    <strong>SUBJECT:</strong> Appointment of Additional Director
+                </div>
+                <div class="pre-resolution-context">
+                    <strong>MEETING DETAILS:</strong><br>
+                    Date: {{MEETING_DATE}}
+                </div>
+                <div class="resolution-text">
+                    <p>“<strong>RESOLVED THAT</strong> pursuant to the provisions of Section 161(1) of the Companies Act, 2013 and the Articles of Association of the Company, Mr./Ms. {{NEW_DIRECTOR_NAME}} (DIN: {{NEW_DIRECTOR_DIN}}), who has signified his/her consent to act as a Director in Form DIR-2 and declared that he/she is not disqualified from being appointed as a Director in Form DIR-8, be and is hereby appointed as an Additional Director of the Company with effect from {{EFFECTIVE_DATE}}.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> Mr./Ms. {{NEW_DIRECTOR_NAME}} shall hold office up to the date of the next Annual General Meeting of the Company.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> any Director of the Company or the Company Secretary be and is hereby authorised to file Form DIR-12 with the Registrar of Companies and do all such acts, deeds, and things as may be necessary to give effect to this resolution.”</p>
+                </div>
+                <div class="signature-block">
+                    <p>For {{COMPANY_NAME}}</p>
+                    <br><br><br>
+                    <p><strong>{{SIGNING_AUTHORITY_NAME}}</strong><br>{{SIGNING_AUTHORITY_DESIGNATION}}<br>DIN: {{SIGNING_AUTHORITY_DIN}}</p>
+                </div>
+            </article>
+
+            <article class="resolution" id="res-dir-resignation" data-title="Director Resignation">
+                <div class="metadata">
+                    <strong>SUBJECT:</strong> Acceptance of Director's Resignation<br>
+                    <strong>SECTION:</strong> 168 of Companies Act, 2013
+                </div>
+                <div class="pre-resolution-context">
+                    <strong>MEETING DETAILS:</strong><br>
+                    Held on {{MEETING_DATE}} at {{MEETING_TIME}} at {{MEETING_VENUE}}.<br>
+                    Chaired by: {{CHAIRPERSON_NAME}}
+                </div>
+                <div class="resolution-text">
+                    <p>“<strong>RESOLVED THAT</strong> the resignation letter dated {{RESIGNATION_DATE}} received from Mr./Ms. {{RESIGNING_DIRECTOR_NAME}} (DIN: {{RESIGNING_DIRECTOR_DIN}}) tendering his/her resignation from the position of Director of the Company with effect from {{RESIGNATION_EFFECTIVE_DATE}}, be and is hereby noted and accepted.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> the Board places on record its sincere appreciation for the valuable services rendered by Mr./Ms. {{RESIGNING_DIRECTOR_NAME}} during his/her tenure as Director of the Company.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> the Company Secretary/Authorised Director be and is hereby authorised to file the necessary Form DIR-12 with the Registrar of Companies and to do all such acts, deeds and things as may be necessary to give effect to this resolution.”</p>
+                </div>
+                <div class="signature-block">
+                    <p>For {{COMPANY_NAME}}</p>
+                    <br><br><br>
+                    <p><strong>{{SIGNING_AUTHORITY_NAME}}</strong><br>{{SIGNING_AUTHORITY_DESIGNATION}}<br>DIN: {{SIGNING_AUTHORITY_DIN}}</p>
+                </div>
+            </article>
+
+            <article class="resolution" id="res-regular-dir" data-title="Appointment of Regular Director">
+                <div class="metadata">
+                    <strong>SUBJECT:</strong> Appointment of Director
+                </div>
+                <div class="pre-resolution-context">
+                    <strong>MEETING DETAILS:</strong><br>
+                    Date: {{MEETING_DATE}}
+                </div>
+                <div class="resolution-text">
+                    <p>“<strong>RESOLVED THAT</strong> pursuant to the provisions of Section 152 of the Companies Act, 2013 and the Articles of Association of the Company, Mr./Ms. {{NEW_DIRECTOR_NAME}} (DIN: {{NEW_DIRECTOR_DIN}}), who was appointed as an Additional Director of the Company and who holds office up to the date of this Annual General Meeting and in respect of whom the Company has received a notice in writing under Section 160 of the Act from a member proposing his/her candidature for the office of Director, be and is hereby appointed as a Director of the Company, liable to retire by rotation.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> the Board of Directors of the Company be and is hereby authorized to do all such acts, deeds and things as may be necessary to give effect to this resolution.”</p>
+                </div>
+                <div class="signature-block">
+                    <p>For {{COMPANY_NAME}}</p>
+                    <br><br><br>
+                    <p><strong>{{SIGNING_AUTHORITY_NAME}}</strong><br>{{SIGNING_AUTHORITY_DESIGNATION}}<br>DIN: {{SIGNING_AUTHORITY_DIN}}</p>
+                </div>
+            </article>
+
+            <article class="resolution" id="res-wtd" data-title="Appointment of Whole-time Director">
+                <div class="metadata">
+                    <strong>SUBJECT:</strong> Appointment of Whole-time Director<br>
+                    <strong>SECTION:</strong> 196, 197 and Schedule V of Companies Act, 2013
+                </div>
+                <div class="pre-resolution-context">
+                    <strong>MEETING DETAILS:</strong><br>
+                    Date: {{MEETING_DATE}}
+                </div>
+                <div class="resolution-text">
+                    <p>“<strong>RESOLVED THAT</strong> pursuant to the provisions of Sections 196, 197, 203 and other applicable provisions, if any, of the Companies Act, 2013 (including any statutory modification(s) or re-enactment thereof for the time being in force) read with Schedule V and the Articles of Association of the Company, the consent of the Board of Directors be and is hereby accorded to the appointment of Mr./Ms. {{WTD_NAME}} (DIN: {{WTD_DIN}}) as Whole-time Director of the Company for a period of {{APPOINTMENT_PERIOD}} with effect from {{EFFECTIVE_DATE}}, on the following terms and conditions:</p>
+                    <p>(a) Remuneration: A monthly salary of Rs. {{MONTHLY_SALARY}} and perquisites and allowances as per the Company's policy.</p>
+                    <p>(b) The terms and conditions of appointment including remuneration shall be subject to the approval of the members of the Company in General Meeting.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> the Board of Directors of the Company be and is hereby authorized to do all such acts, deeds and things as may be necessary to give effect to this resolution.”</p>
+                </div>
+                <div class="signature-block">
+                    <p>For {{COMPANY_NAME}}</p>
+                    <br><br><br>
+                    <p><strong>{{SIGNING_AUTHORITY_NAME}}</strong><br>{{SIGNING_AUTHORITY_DESIGNATION}}<br>DIN: {{SIGNING_AUTHORITY_DIN}}</p>
+                </div>
+            </article>
+
+            <article class="resolution" id="res-cs" data-title="Appointment of Company Secretary">
+                <div class="metadata">
+                    <strong>SUBJECT:</strong> Appointment of Company Secretary<br>
+                    <strong>SECTION:</strong> 203 of Companies Act, 2013
+                </div>
+                <div class="pre-resolution-context">
+                    <strong>MEETING DETAILS:</strong><br>
+                    Date: {{MEETING_DATE}}
+                </div>
+                <div class="resolution-text">
+                    <p>“<strong>RESOLVED THAT</strong> pursuant to the provisions of Section 203 of the Companies Act, 2013 and the rules made thereunder, Mr./Ms. {{CS_NAME}} (Membership No. {{CS_MEMBERSHIP_NO}}) be and is hereby appointed as the Company Secretary of the Company with effect from {{EFFECTIVE_DATE}}.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> Mr./Ms. {{CS_NAME}} shall be designated as the Compliance Officer of the Company for the purposes of various statutes including the SEBI (Listing Obligations and Disclosure Requirements) Regulations, 2015, as applicable.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> the remuneration payable to Mr./Ms. {{CS_NAME}} shall be Rs. {{CS_SALARY}} per month and other perquisites as per the Company's policy.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> the Board of Directors of the Company be and is hereby authorized to do all such acts, deeds and things as may be necessary to give effect to this resolution.”</p>
+                </div>
+                <div class="signature-block">
+                    <p>For {{COMPANY_NAME}}</p>
+                    <br><br><br>
+                    <p><strong>{{SIGNING_AUTHORITY_NAME}}</strong><br>{{SIGNING_AUTHORITY_DESIGNATION}}<br>DIN: {{SIGNING_AUTHORITY_DIN}}</p>
+                </div>
+            </article>
+
+            <article class="resolution" id="res-cfo" data-title="Appointment of CFO">
+                <div class="metadata">
+                    <strong>SUBJECT:</strong> Appointment of Chief Financial Officer<br>
+                    <strong>SECTION:</strong> 203 of Companies Act, 2013
+                </div>
+                <div class="pre-resolution-context">
+                    <strong>MEETING DETAILS:</strong><br>
+                    Date: {{MEETING_DATE}}
+                </div>
+                <div class="resolution-text">
+                    <p>“<strong>RESOLVED THAT</strong> pursuant to the provisions of Section 203 of the Companies Act, 2013 and the rules made thereunder, Mr./Ms. {{CFO_NAME}} be and is hereby appointed as the Chief Financial Officer (CFO) of the Company with effect from {{EFFECTIVE_DATE}}.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> the remuneration payable to Mr./Ms. {{CFO_NAME}} shall be Rs. {{CFO_SALARY}} per month and other perquisites as per the Company's policy.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> the Board of Directors of the Company be and is hereby authorized to do all such acts, deeds and things as may be necessary to give effect to this resolution.”</p>
+                </div>
+                <div class="signature-block">
+                    <p>For {{COMPANY_NAME}}</p>
+                    <br><br><br>
+                    <p><strong>{{SIGNING_AUTHORITY_NAME}}</strong><br>{{SIGNING_AUTHORITY_DESIGNATION}}<br>DIN: {{SIGNING_AUTHORITY_DIN}}</p>
+                </div>
+            </article>
+
+            <!-- CATEGORY 3: BANKING & FINANCE -->
+            <article class="resolution" id="res-open-bank" data-title="Opening Bank Account">
+                <div class="metadata">
+                    <strong>SUBJECT:</strong> Opening of Bank Account
+                </div>
+                <div class="pre-resolution-context">
+                    <strong>MEETING DETAILS:</strong><br>
+                    Date: {{MEETING_DATE}}
+                </div>
+                <div class="resolution-text">
+                    <p>“<strong>RESOLVED THAT</strong> a Current Account be opened in the name of {{COMPANY_NAME}} with {{BANK_NAME}} at its branch situated at {{BRANCH_ADDRESS}}.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> the said bank be and is hereby authorised to honor all cheques, bills of exchange, promissory notes, and other orders drawn, accepted, or made on behalf of the Company, provided they are signed by the following authorised signatories in the manner prescribed below:</p>
+                    <p><strong>Authorised Signatories:</strong><br>
+                    1. Mr. {{SIGNATORY_1_NAME}}<br>
+                    2. Mr. {{SIGNATORY_2_NAME}}<br>
+                    3. Mr. {{SIGNATORY_3_NAME}}</p>
+                    <p><strong>Mode of Operation:</strong><br>
+                    (a) Any one of the above severally up to Rs. {{LIMIT_AMOUNT}}/-;<br>
+                    (b) Any two of the above jointly for amounts exceeding Rs. {{LIMIT_AMOUNT}}/-.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> the above authorised signatories are also hereby authorised to access and operate the account through Internet Banking / Corporate Net Banking / Debit Card facilities offered by the Bank, subject to the limits prescribed above.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> {{DIRECTOR_NAME}}, Director of the Company, be and is hereby authorised to communicate a certified copy of this resolution to the said Bank.”</p>
+                </div>
+                <div class="signature-block">
+                    <p>For {{COMPANY_NAME}}</p>
+                    <br><br><br>
+                    <p><strong>{{SIGNING_AUTHORITY_NAME}}</strong><br>{{SIGNING_AUTHORITY_DESIGNATION}}<br>DIN: {{SIGNING_AUTHORITY_DIN}}</p>
+                </div>
+            </article>
+
+            <article class="resolution" id="res-borrow-limits" data-title="Borrowing Powers (Sec 179)">
+                <div class="metadata">
+                    <strong>SUBJECT:</strong> Borrowing Powers<br>
+                    <strong>SECTION:</strong> 179(3)(d) of Companies Act, 2013
+                </div>
+                <div class="pre-resolution-context">
+                    <strong>MEETING DETAILS:</strong><br>
+                    Date: {{MEETING_DATE}}
+                </div>
+                <div class="resolution-text">
+                    <p>“<strong>RESOLVED THAT</strong> pursuant to Section 179(3)(d) of the Companies Act, 2013, consent of the Board be and is hereby accorded to borrow monies from time to time from banks, financial institutions, or other bodies corporate, provided that the total amount so borrowed (together with the monies already borrowed by the Company, apart from temporary loans obtained from the Company's bankers in the ordinary course of business) does not exceed the aggregate of the paid-up share capital, free reserves, and securities premium of the Company.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> Mr. {{DIRECTOR_NAME}}, Director, be authorised to negotiate terms, execute loan agreements, and sign promissory notes on behalf of the Company.”</p>
+                </div>
+                <div class="signature-block">
+                    <p>For {{COMPANY_NAME}}</p>
+                    <br><br><br>
+                    <p><strong>{{SIGNING_AUTHORITY_NAME}}</strong><br>{{SIGNING_AUTHORITY_DESIGNATION}}<br>DIN: {{SIGNING_AUTHORITY_DIN}}</p>
+                </div>
+            </article>
+
+            <article class="resolution" id="res-loan-sanction" data-title="Sanction of Loan">
+                <div class="metadata">
+                    <strong>SUBJECT:</strong> Sanction of Loan
+                </div>
+                <div class="pre-resolution-context">
+                    <strong>MEETING DETAILS:</strong><br>
+                    Date: {{MEETING_DATE}}
+                </div>
+                <div class="resolution-text">
+                    <p>“<strong>RESOLVED THAT</strong> consent of the Board of Directors be and is hereby accorded to avail a term loan facility of Rs. {{LOAN_AMOUNT}} from {{LENDER_NAME}} for the purpose of {{LOAN_PURPOSE}}.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> the said loan shall carry interest at the rate of {{INTEREST_RATE}} per annum and shall be repayable in {{NUMBER_OF_INSTALLMENTS}} equal quarterly/half-yearly/annual installments commencing from {{COMMENCEMENT_DATE}}.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> Mr./Ms. {{AUTHORISED_DIRECTOR}}, Director of the Company, be and is hereby authorised to execute all necessary documents, deeds, writings and papers as may be required by the lender and to do all such acts and things as may be necessary for availing the said loan facility.”</p>
+                </div>
+                <div class="signature-block">
+                    <p>For {{COMPANY_NAME}}</p>
+                    <br><br><br>
+                    <p><strong>{{SIGNING_AUTHORITY_NAME}}</strong><br>{{SIGNING_AUTHORITY_DESIGNATION}}<br>DIN: {{SIGNING_AUTHORITY_DIN}}</p>
+                </div>
+            </article>
+
+            <article class="resolution" id="res-bg" data-title="Bank Guarantee Facility">
+                <div class="metadata">
+                    <strong>SUBJECT:</strong> Bank Guarantee Facility
+                </div>
+                <div class="pre-resolution-context">
+                    <strong>MEETING DETAILS:</strong><br>
+                    Date: {{MEETING_DATE}}
+                </div>
+                <div class="resolution-text">
+                    <p>“<strong>RESOLVED THAT</strong> consent of the Board of Directors be and is hereby accorded to the Company to arrange for Bank Guarantees from time to time from {{BANK_NAME}} for an aggregate amount not exceeding Rs. {{BG_LIMIT}} at any point of time for the business purposes of the Company.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> the Bank be and is hereby requested to issue such guarantees as may be required by the Company from time to time against such security and on such terms and conditions as may be agreed upon between the Bank and the Company.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> Mr./Ms. {{AUTHORISED_DIRECTOR}}, Director and Mr./Ms. {{AUTHORISED_OFFICER}}, Officer of the Company, be and are hereby jointly/severally authorised to execute and sign all counter-guarantees, indemnities, and other documents that may be required by the Bank in connection with the issuance of such Bank Guarantees.”</p>
+                </div>
+                <div class="signature-block">
+                    <p>For {{COMPANY_NAME}}</p>
+                    <br><br><br>
+                    <p><strong>{{SIGNING_AUTHORITY_NAME}}</strong><br>{{SIGNING_AUTHORITY_DESIGNATION}}<br>DIN: {{SIGNING_AUTHORITY_DIN}}</p>
+                </div>
+            </article>
+
+            <!-- CATEGORY 4: SHARE CAPITAL -->
+            <article class="resolution" id="res-transfer-shares" data-title="Transfer of Shares">
+                <div class="metadata">
+                    <strong>SUBJECT:</strong> Approval of Transfer of Shares<br>
+                    <strong>SECTION:</strong> 56 of Companies Act, 2013
+                </div>
+                <div class="pre-resolution-context">
+                    <strong>MEETING DETAILS:</strong><br>
+                    Date: {{MEETING_DATE}}
+                </div>
+                <div class="resolution-text">
+                    <p>“<strong>RESOLVED THAT</strong> pursuant to the Articles of Association of the Company and Section 56 of the Companies Act, 2013, the transfer of {{NUMBER_OF_SHARES}} Equity Shares of Rs. {{FACE_VALUE}}/- each, as per the Share Transfer Deed(s) (Form SH-4) placed before the meeting, be and is hereby approved.</p>
+                    <p><strong>Details of Transfer:</strong><br>
+                    From: {{TRANSFEROR_NAME}} (Folio No. {{FROM_FOLIO}})<br>
+                    To: {{TRANSFEREE_NAME}} (Folio No. {{TO_FOLIO}})</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> the Company Secretary / Director be and is hereby authorised to endorse the Share Certificates in the name of the Transferee and make necessary entries in the Register of Members.”</p>
+                </div>
+                <div class="signature-block">
+                    <p>For {{COMPANY_NAME}}</p>
+                    <br><br><br>
+                    <p><strong>{{SIGNING_AUTHORITY_NAME}}</strong><br>{{SIGNING_AUTHORITY_DESIGNATION}}<br>DIN: {{SIGNING_AUTHORITY_DIN}}</p>
+                </div>
+            </article>
+
+            <article class="resolution" id="res-issue-shares" data-title="Issue of Shares">
+                <div class="metadata">
+                    <strong>SUBJECT:</strong> Issue of Equity Shares<br>
+                    <strong>SECTION:</strong> 62 of Companies Act, 2013
+                </div>
+                <div class="pre-resolution-context">
+                    <strong>MEETING DETAILS:</strong><br>
+                    Date: {{MEETING_DATE}}
+                </div>
+                <div class="resolution-text">
+                    <p>“<strong>RESOLVED THAT</strong> pursuant to the provisions of Section 62 and other applicable provisions, if any, of the Companies Act, 2013 and the rules made thereunder (including any statutory modification(s) or re-enactment thereof for the time being in force) and subject to such approvals, permissions and sanctions of the appropriate authorities as may be necessary and subject to such conditions and modifications as may be prescribed or imposed while granting such approvals, which the Board of Directors of the Company (hereinafter referred to as "the Board") be and is hereby authorized to accept, consent be and is hereby accorded to the Board to issue and allot {{NUMBER_OF_SHARES}} Equity Shares of Rs. {{FACE_VALUE}} each at a premium of Rs. {{PREMIUM_AMOUNT}} per share to the persons mentioned below:</p>
+                    <p>1. {{ALLOTEE_1_NAME}} - {{SHARES_ALLOTTED_1}} shares</p>
+                    <p>2. {{ALLOTEE_2_NAME}} - {{SHARES_ALLOTTED_2}} shares</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> the Board be and is hereby authorized to do all such acts, deeds, matters and things as may be necessary for giving effect to this resolution.</p>
+                </div>
+                <div class="signature-block">
+                    <p>For {{COMPANY_NAME}}</p>
+                    <br><br><br>
+                    <p><strong>{{SIGNING_AUTHORITY_NAME}}</strong><br>{{SIGNING_AUTHORITY_DESIGNATION}}<br>DIN: {{SIGNING_AUTHORITY_DIN}}</p>
+                </div>
+            </article>
+
+            <!-- CATEGORY 5: FINANCIAL STATEMENTS -->
+            <article class="resolution" id="res-approve-accts" data-title="Approve Financial Statements">
+                <div class="metadata">
+                    <strong>SUBJECT:</strong> Approval of Annual Financial Statements
+                </div>
+                <div class="pre-resolution-context">
+                    <strong>MEETING DETAILS:</strong><br>
+                    Date: {{MEETING_DATE}}
+                </div>
+                <div class="resolution-text">
+                    <p>“<strong>RESOLVED THAT</strong> the Financial Statements of the Company for the financial year ended 31st March, {{YEAR}}, comprising the Balance Sheet, Statement of Profit and Loss, [Cash Flow Statement], and Notes to Accounts, as placed before the meeting and initialed by the Chairperson for identification, be and are hereby approved and adopted.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> Mr. {{DIRECTOR_1_NAME}} and Mr. {{DIRECTOR_2_NAME}}, Directors of the Company, be and are hereby authorised to sign the same on behalf of the Board.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> the draft Board's Report for the financial year ended 31st March, {{YEAR}}, placed before the meeting, be and is hereby approved, and the Chairperson be authorised to sign the same on behalf of the Board.”</p>
+                </div>
+                <div class="signature-block">
+                    <p>For {{COMPANY_NAME}}</p>
+                    <br><br><br>
+                    <p><strong>{{SIGNING_AUTHORITY_NAME}}</strong><br>{{SIGNING_AUTHORITY_DESIGNATION}}<br>DIN: {{SIGNING_AUTHORITY_DIN}}</p>
+                </div>
+            </article>
+
+            <article class="resolution" id="res-quarterly-results" data-title="Approval of Quarterly Results">
+                <div class="metadata">
+                    <strong>SUBJECT:</strong> Approval of Quarterly Financial Results
+                </div>
+                <div class="pre-resolution-context">
+                    <strong>MEETING DETAILS:</strong><br>
+                    Date: {{MEETING_DATE}}
+                </div>
+                <div class="resolution-text">
+                    <p>“<strong>RESOLVED THAT</strong> the Unaudited/Standalone/Consolidated Financial Results of the Company for the quarter ended {{QUARTER_END_DATE}}, together with the Limited Review Report issued by the Statutory Auditors of the Company, as placed before the meeting, be and are hereby taken on record and approved.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> the Company Secretary be and is hereby authorised to file the said Financial Results with the Stock Exchange(s) and take such other steps as may be necessary for compliance with the applicable provisions of the SEBI (Listing Obligations and Disclosure Requirements) Regulations, 2015.”</p>
+                </div>
+                <div class="signature-block">
+                    <p>For {{COMPANY_NAME}}</p>
+                    <br><br><br>
+                    <p><strong>{{SIGNING_AUTHORITY_NAME}}</strong><br>{{SIGNING_AUTHORITY_DESIGNATION}}<br>DIN: {{SIGNING_AUTHORITY_DIN}}</p>
+                </div>
+            </article>
+
+            <!-- CATEGORY 6: CONTRACTS & AGREEMENTS -->
+            <article class="resolution" id="res-related-party" data-title="Related Party Transaction">
+                <div class="metadata">
+                    <strong>SUBJECT:</strong> Approval of Related Party Transaction<br>
+                    <strong>SECTION:</strong> 188 of Companies Act, 2013
+                </div>
+                <div class="pre-resolution-context">
+                    <strong>MEETING DETAILS:</strong><br>
+                    Date: {{MEETING_DATE}}
+                </div>
+                <div class="resolution-text">
+                    <p>“<strong>RESOLVED THAT</strong> pursuant to the provisions of Section 188 of the Companies Act, 2013 and rules made thereunder and Regulation 23 of the SEBI (Listing Obligations and Disclosure Requirements) Regulations, 2015, consent of the Board of Directors be and is hereby accorded to the Company to enter into a {{CONTRACT_TYPE}} with {{RELATED_PARTY_NAME}}, a related party, on an arm's length basis, for {{CONTRACT_DESCRIPTION}}.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> the terms of the contract/arrangement are as follows:</p>
+                    <p>1. Contract Value: Rs. {{CONTRACT_VALUE}}</p>
+                    <p>2. Duration: {{CONTRACT_DURATION}}</p>
+                    <p>3. Other Terms: {{OTHER_TERMS}}</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> Mr./Ms. {{AUTHORISED_DIRECTOR}}, Director of the Company, be and is hereby authorised to execute all such documents and to do all such acts and things as may be necessary to give effect to this resolution.”</p>
+                </div>
+                <div class="signature-block">
+                    <p>For {{COMPANY_NAME}}</p>
+                    <br><br><br>
+                    <p><strong>{{SIGNING_AUTHORITY_NAME}}</strong><br>{{SIGNING_AUTHORITY_DESIGNATION}}<br>DIN: {{SIGNING_AUTHORITY_DIN}}</p>
+                </div>
+            </article>
+
+            <article class="resolution" id="res-material-contract" data-title="Material Contract">
+                <div class="metadata">
+                    <strong>SUBJECT:</strong> Approval of Material Contract
+                </div>
+                <div class="pre-resolution-context">
+                    <strong>MEETING DETAILS:</strong><br>
+                    Date: {{MEETING_DATE}}
+                </div>
+                <div class="resolution-text">
+                    <p>“<strong>RESOLVED THAT</strong> consent of the Board of Directors be and is hereby accorded to the Company to enter into a {{CONTRACT_TYPE}} with {{CONTRACT_PARTY}} for {{CONTRACT_DESCRIPTION}}.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> the salient terms of the contract are as follows:</p>
+                    <p>1. Contract Value: Rs. {{CONTRACT_VALUE}}</p>
+                    <p>2. Duration: {{CONTRACT_DURATION}}</p>
+                    <p>3. Payment Terms: {{PAYMENT_TERMS}}</p>
+                    <p>4. Other Terms: {{OTHER_TERMS}}</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> Mr./Ms. {{AUTHORISED_DIRECTOR}}, Director of the Company, be and is hereby authorised to execute the said contract and all other documents as may be required in connection therewith and to do all such acts and things as may be necessary to give effect to this resolution.”</p>
+                </div>
+                <div class="signature-block">
+                    <p>For {{COMPANY_NAME}}</p>
+                    <br><br><br>
+                    <p><strong>{{SIGNING_AUTHORITY_NAME}}</strong><br>{{SIGNING_AUTHORITY_DESIGNATION}}<br>DIN: {{SIGNING_AUTHORITY_DIN}}</p>
+                </div>
+            </article>
+
+            <!-- CATEGORY 7: PROPERTY & ASSETS -->
+            <article class="resolution" id="res-property-lease" data-title="Lease of Property">
+                <div class="metadata">
+                    <strong>SUBJECT:</strong> Lease of Property
+                </div>
+                <div class="pre-resolution-context">
+                    <strong>MEETING DETAILS:</strong><br>
+                    Date: {{MEETING_DATE}}
+                </div>
+                <div class="resolution-text">
+                    <p>“<strong>RESOLVED THAT</strong> consent of the Board of Directors be and is hereby accorded to the Company to take on lease the property situated at {{PROPERTY_ADDRESS}} from {{LESSOR_NAME}} for a period of {{LEASE_PERIOD}} commencing from {{LEASE_START_DATE}} for a monthly rent of Rs. {{MONTHLY_RENT}} exclusive of maintenance charges and other outgoings.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> Mr./Ms. {{AUTHORISED_DIRECTOR}}, Director of the Company, be and is hereby authorised to execute the Lease Deed and all other documents as may be required in connection therewith and to do all such acts and things as may be necessary to give effect to this resolution.”</p>
+                </div>
+                <div class="signature-block">
+                    <p>For {{COMPANY_NAME}}</p>
+                    <br><br><br>
+                    <p><strong>{{SIGNING_AUTHORITY_NAME}}</strong><br>{{SIGNING_AUTHORITY_DESIGNATION}}<br>DIN: {{SIGNING_AUTHORITY_DIN}}</p>
+                </div>
+            </article>
+
+            <article class="resolution" id="res-asset-purchase" data-title="Purchase of Assets">
+                <div class="metadata">
+                    <strong>SUBJECT:</strong> Purchase of Assets
+                </div>
+                <div class="pre-resolution-context">
+                    <strong>MEETING DETAILS:</strong><br>
+                    Date: {{MEETING_DATE}}
+                </div>
+                <div class="resolution-text">
+                    <p>“<strong>RESOLVED THAT</strong> consent of the Board of Directors be and is hereby accorded to the purchase of {{ASSET_DESCRIPTION}} from {{SUPPLIER_NAME}} at a total cost of Rs. {{ASSET_COST}} for the business purposes of the Company.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> Mr./Ms. {{AUTHORISED_DIRECTOR}}, Director of the Company, be and is hereby authorised to finalise the terms of purchase, execute the necessary documents and do all such acts and things as may be necessary to give effect to this resolution.”</p>
+                </div>
+                <div class="signature-block">
+                    <p>For {{COMPANY_NAME}}</p>
+                    <br><br><br>
+                    <p><strong>{{SIGNING_AUTHORITY_NAME}}</strong><br>{{SIGNING_AUTHORITY_DESIGNATION}}<br>DIN: {{SIGNING_AUTHORITY_DIN}}</p>
+                </div>
+            </article>
+
+            <!-- CATEGORY 8: COMPLIANCE & FILINGS -->
+            <article class="resolution" id="res-annual-return" data-title="Filing of Annual Return">
+                <div class="metadata">
+                    <strong>SUBJECT:</strong> Filing of Annual Return
+                </div>
+                <div class="pre-resolution-context">
+                    <strong>MEETING DETAILS:</strong><br>
+                    Date: {{MEETING_DATE}}
+                </div>
+                <div class="resolution-text">
+                    <p>“<strong>RESOLVED THAT</strong> the Annual Return of the Company for the financial year ended {{FINANCIAL_YEAR_END}}, prepared in Form MGT-7 pursuant to Section 92 of the Companies Act, 2013, as placed before the meeting, be and is hereby approved.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> Mr./Ms. {{AUTHORISED_DIRECTOR}}/Company Secretary, be and is hereby authorised to sign and file the said Annual Return with the Registrar of Companies within the stipulated time.”</p>
+                </div>
+                <div class="signature-block">
+                    <p>For {{COMPANY_NAME}}</p>
+                    <br><br><br>
+                    <p><strong>{{SIGNING_AUTHORITY_NAME}}</strong><br>{{SIGNING_AUTHORITY_DESIGNATION}}<br>DIN: {{SIGNING_AUTHORITY_DIN}}</p>
+                </div>
+            </article>
+
+            <!-- CATEGORY 9: REGISTERED OFFICE -->
+            <article class="resolution" id="res-shift-reg-office" data-title="Shift Registered Office (Local)">
+                <div class="metadata">
+                    <strong>SUBJECT:</strong> Shifting of Registered Office (Within Local Limits)
+                </div>
+                <div class="pre-resolution-context">
+                    <strong>MEETING DETAILS:</strong><br>
+                    Date: {{MEETING_DATE}}
+                </div>
+                <div class="resolution-text">
+                    <p>“<strong>RESOLVED THAT</strong> consent of the Board be and is hereby accorded to shift the Registered Office of the Company from {{OLD_ADDRESS}} to {{NEW_ADDRESS}}, which is within the local limits of the same city/town/village, with effect from {{EFFECTIVE_DATE}}.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> the new address be used for all statutory correspondence and be printed on all letterheads, invoices, and official documents of the Company.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> any Director/Company Secretary be and is hereby authorised to file Form INC-22 with the Registrar of Companies within 30 days and take all necessary steps to give effect to this resolution.”</p>
+                </div>
+                <div class="signature-block">
+                    <p>For {{COMPANY_NAME}}</p>
+                    <br><br><br>
+                    <p><strong>{{SIGNING_AUTHORITY_NAME}}</strong><br>{{SIGNING_AUTHORITY_DESIGNATION}}<br>DIN: {{SIGNING_AUTHORITY_DIN}}</p>
+                </div>
+            </article>
+
+            <article class="resolution" id="res-shift-reg-office-state" data-title="Shift Registered Office (Inter-State)">
+                <div class="metadata">
+                    <strong>SUBJECT:</strong> Shifting of Registered Office (Outside State)<br>
+                    <strong>SECTION:</strong> 12 and 13 of Companies Act, 2013
+                </div>
+                <div class="pre-resolution-context">
+                    <strong>MEETING DETAILS:</strong><br>
+                    Date: {{MEETING_DATE}}
+                </div>
+                <div class="resolution-text">
+                    <p>“<strong>RESOLVED THAT</strong> pursuant to the provisions of Section 12 and 13 of the Companies Act, 2013 and subject to the approval of the Regional Director and such other authorities as may be required, consent of the Board be and is hereby accorded to shift the Registered Office of the Company from {{OLD_ADDRESS}}, {{OLD_STATE}} to {{NEW_ADDRESS}}, {{NEW_STATE}}.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> the draft notice convening the Extraordinary General Meeting to seek the approval of the members for the said shifting, as placed before the meeting, be and is hereby approved.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> any Director/Company Secretary be and is hereby authorised to file the necessary applications with the Regional Director and other authorities and to do all such acts and things as may be necessary to give effect to this resolution.”</p>
+                </div>
+                <div class="signature-block">
+                    <p>For {{COMPANY_NAME}}</p>
+                    <br><br><br>
+                    <p><strong>{{SIGNING_AUTHORITY_NAME}}</strong><br>{{SIGNING_AUTHORITY_DESIGNATION}}<br>DIN: {{SIGNING_AUTHORITY_DIN}}</p>
+                </div>
+            </article>
+
+            <!-- CATEGORY 10: MISCELLANEOUS -->
+            <article class="resolution" id="res-csr" data-title="CSR Committee & Policy">
+                <div class="metadata">
+                    <strong>SUBJECT:</strong> Corporate Social Responsibility Committee & Policy<br>
+                    <strong>SECTION:</strong> 135 of Companies Act, 2013
+                </div>
+                <div class="pre-resolution-context">
+                    <strong>MEETING DETAILS:</strong><br>
+                    Date: {{MEETING_DATE}}
+                </div>
+                <div class="resolution-text">
+                    <p>“<strong>RESOLVED THAT</strong> pursuant to the provisions of Section 135 of the Companies Act, 2013 and the Companies (Corporate Social Responsibility Policy) Rules, 2014, the Corporate Social Responsibility Committee of the Company be and is hereby constituted with the following Directors as members:</p>
+                    <p>1. {{CSR_CHAIRPERSON}} - Chairperson</p>
+                    <p>2. {{CSR_MEMBER_1}}</p>
+                    <p>3. {{CSR_MEMBER_2}}</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> the Corporate Social Responsibility Policy of the Company, as placed before the meeting, be and is hereby approved.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> the Company Secretary be and is hereby authorised to file the necessary details with the Registrar of Companies in the prescribed manner.”</p>
+                </div>
+                <div class="signature-block">
+                    <p>For {{COMPANY_NAME}}</p>
+                    <br><br><br>
+                    <p><strong>{{SIGNING_AUTHORITY_NAME}}</strong><br>{{SIGNING_AUTHORITY_DESIGNATION}}<br>DIN: {{SIGNING_AUTHORITY_DIN}}</p>
+                </div>
+            </article>
+
+            <article class="resolution" id="res-vigil-mechanism" data-title="Vigil Mechanism">
+                <div class="metadata">
+                    <strong>SUBJECT:</strong> Vigil Mechanism (Whistleblower Policy)<br>
+                    <strong>SECTION:</strong> 177 of Companies Act, 2013
+                </div>
+                <div class="pre-resolution-context">
+                    <strong>MEETING DETAILS:</strong><br>
+                    Date: {{MEETING_DATE}}
+                </div>
+                <div class="resolution-text">
+                    <p>“<strong>RESOLVED THAT</strong> pursuant to the provisions of Section 177(9) of the Companies Act, 2013 and Regulation 22 of the SEBI (Listing Obligations and Disclosure Requirements) Regulations, 2015, the Vigil Mechanism (Whistleblower Policy) of the Company, as placed before the meeting, be and is hereby approved and adopted.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> the said Vigil Mechanism be made available on the website of the Company and the same be communicated to all the employees of the Company.</p>
+                    <p><strong>RESOLVED FURTHER THAT</strong> the Audit Committee of the Company shall oversee the Vigil Mechanism.”</p>
+                </div>
+                <div class="signature-block">
+                    <p>For {{COMPANY_NAME}}</p>
+                    <br><br><br>
+                    <p><strong>{{SIGNING_AUTHORITY_NAME}}</strong><br>{{SIGNING_AUTHORITY_DESIGNATION}}<br>DIN: {{SIGNING_AUTHORITY_DIN}}</p>
+                </div>
+            </article>
+
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURATION ---
+        const COMMON_KEYS = [
+            'COMPANY_NAME', 'CIN', 'MEETING_DATE', 'MEETING_TIME', 
+            'MEETING_VENUE', 'CHAIRPERSON_NAME', 'SIGNING_AUTHORITY_NAME', 
+            'SIGNING_AUTHORITY_DESIGNATION', 'SIGNING_AUTHORITY_DIN'
+        ];
+
+        // Global State
+        let resolutionsData = {};
+        let currentResId = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initScanner();
+            initDropdown();
+        });
+
+        // --- 1. SCANNER ENGINE ---
+        // Scans the HTML to find resolutions and their specific placeholders
+        function initScanner() {
+            const articles = document.querySelectorAll('article.resolution');
+            const regex = /\{\{(.*?)\}\}/g;
+
+            // Generate inputs for Common Keys first
+            const commonContainer = document.getElementById('common-fields');
+            COMMON_KEYS.forEach(key => createInput(key, commonContainer));
+
+            articles.forEach(article => {
+                const id = article.id;
+                const title = article.getAttribute('data-title') || id;
+                const specificKeys = new Set();
+
+                // Recursive function to replace text nodes with spans and collect keys
+                function scanNode(node) {
+                    if (node.nodeType === 3) { // Text node
+                        let text = node.nodeValue;
+                        if (regex.test(text)) {
+                            const fragment = document.createDocumentFragment();
+                            let lastIndex = 0;
+                            text.replace(regex, (match, key, offset) => {
+                                const cleanKey = key.trim();
+                                
+                                // 1. Add text before match
+                                fragment.appendChild(document.createTextNode(text.slice(lastIndex, offset)));
+                                
+                                // 2. Create Dynamic Span
+                                const span = document.createElement('span');
+                                span.className = 'dynamic-value';
+                                span.dataset.key = cleanKey;
+                                span.dataset.empty = "true"; // Start empty
+                                span.textContent = match; // Default: {{KEY}}
+                                fragment.appendChild(span);
+
+                                // 3. Record Key if not common
+                                if (!COMMON_KEYS.includes(cleanKey)) {
+                                    specificKeys.add(cleanKey);
+                                }
+
+                                lastIndex = offset + match.length;
+                                return match;
+                            });
+                            fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+                            node.parentNode.replaceChild(fragment, node);
+                        }
+                    } else if (node.nodeType === 1) {
+                        Array.from(node.childNodes).forEach(scanNode);
+                    }
+                }
+
+                scanNode(article);
+
+                resolutionsData[id] = {
+                    title: title,
+                    keys: Array.from(specificKeys).sort()
+                };
+            });
+        }
+
+        // --- 2. UI BUILDER ---
+        function createInput(key, container) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'input-group';
+            
+            const label = document.createElement('label');
+            label.textContent = key.replace(/_/g, ' ');
+            
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.dataset.targetKey = key;
+            input.placeholder = `Enter ${key.replace(/_/g, ' ').toLowerCase()}`;
+            
+            // Sync Logic
+            input.addEventListener('input', (e) => {
+                const val = e.target.value;
+                const targets = document.querySelectorAll(`.dynamic-value[data-key="${key}"], .dynamic-text[data-key="${key}"]`);
+                targets.forEach(span => {
+                    span.textContent = val ? val : `{{${key}}}`;
+                    if(span.classList.contains('dynamic-value')) {
+                        if(val) {
+                            span.style.backgroundColor = 'transparent';
+                            span.style.color = 'inherit';
+                            span.style.borderBottom = 'none';
+                            span.dataset.empty = "false";
+                        } else {
+                            span.style.backgroundColor = 'rgba(99, 102, 241, 0.1)';
+                            span.style.color = 'var(--brand-primary)';
+                            span.style.borderBottom = '1px dashed var(--brand-primary)';
+                            span.dataset.empty = "true";
+                        }
+                    }
+                });
+            });
+
+            wrapper.appendChild(label);
+            wrapper.appendChild(input);
+            container.appendChild(wrapper);
+        }
+
+        function initDropdown() {
+            const select = document.getElementById('resolution-selector');
+            
+            // Populate Dropdown
+            Object.keys(resolutionsData).forEach(id => {
+                const opt = document.createElement('option');
+                opt.value = id;
+                opt.textContent = resolutionsData[id].title;
+                select.appendChild(opt);
+            });
+
+            // Handle Selection
+            select.addEventListener('change', (e) => {
+                const id = e.target.value;
+                currentResId = id;
+                
+                // 1. Hide Welcome / Show Resolution
+                document.getElementById('welcome-screen').style.display = id ? 'none' : 'block';
+                document.querySelectorAll('article.resolution').forEach(el => {
+                    el.classList.remove('active');
+                    if(el.id === id) el.classList.add('active');
+                });
+
+                // 2. Refresh Specific Inputs
+                const specificContainer = document.getElementById('specific-fields');
+                specificContainer.innerHTML = ''; // Clear old
+                
+                const containerWrapper = document.getElementById('specific-fields-container');
+                
+                if (id && resolutionsData[id].keys.length > 0) {
+                    containerWrapper.style.display = 'block';
+                    resolutionsData[id].keys.forEach(key => createInput(key, specificContainer));
+                } else {
+                    containerWrapper.style.display = 'none';
+                }
+            });
+        }
+
+        // --- 3. EXPORT FUNCTIONS ---
+
+        function downloadWord() {
+            if (!currentResId) { alert("Please select a resolution first."); return; }
+
+            const headerHTML = document.getElementById('doc-header').innerHTML;
+            const contentHTML = document.getElementById(currentResId).innerHTML;
+
+            // Construct minimal HTML for Word with specific Word-friendly CSS
+            const fullHTML = `
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                <head><meta charset='utf-8'><title>Resolution</title>
+                <style>
+                    body { font-family: 'Times New Roman', serif; font-size: 12pt; }
+                    h1 { text-align: center; font-size: 16pt; font-weight: bold; }
+                    p { text-align: justify; margin-bottom: 1em; }
+                    .signature-block { margin-top: 50px; text-align: right; }
+                    /* Hide UI elements in Word */
+                    .metadata, .pre-resolution-context { display: none; }
+                </style>
+                </head><body>
+                ${headerHTML}
+                <br>
+                ${contentHTML}
+                </body></html>
+            `;
+
+            const blob = new Blob(['\ufeff', fullHTML], { type: 'application/msword' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Board_Resolution_${currentResId}.doc`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function downloadPDF() {
+            if (!currentResId) { alert("Please select a resolution first."); return; }
+            
+            // Temporary container to assemble print view
+            const element = document.createElement('div');
+            element.innerHTML = document.getElementById('doc-header').innerHTML + "<br>" + document.getElementById(currentResId).innerHTML;
+            element.style.padding = "40px";
+            element.style.fontFamily = "Georgia, serif";
+            
+            // Remove any UI specific classes/styles from clone
+            element.querySelectorAll('.metadata, .pre-resolution-context').forEach(e => e.remove()); 
+            
+            const opt = {
+                margin:       1,
+                filename:     `Resolution_${currentResId}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+
+            // Use html2pdf library
+            html2pdf().set(opt).from(element).save();
+        }
+    </script>
+</body>
+</html>

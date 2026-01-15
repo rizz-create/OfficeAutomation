@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Compliance Automation | Home</title>
+
+<style>
+/* ================= THEME VARIABLES ================= */
+:root{
+    --primary:#0f766e;
+    --primary-dark:#064e3b;
+
+    --bg:#f7f9fb;
+    --card:#ffffff;
+    --text:#1f2937;
+    --muted:#6b7280;
+
+    --radius:16px;
+    --shadow:0 10px 30px rgba(0,0,0,.08);
+}
+
+/* ---------- DARK MODE ---------- */
+[data-theme="dark"]{
+    --bg:#0f172a;
+    --card:#020617;
+    --text:#e5e7eb;
+    --muted:#9ca3af;
+    --shadow:0 10px 30px rgba(0,0,0,.6);
+}
+
+/* ================= BASE ================= */
+*{box-sizing:border-box}
+body{
+    margin:0;
+    font-family:"Segoe UI", system-ui, sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    transition:background .3s,color .3s;
+}
+
+/* ================= HEADER ================= */
+header{
+    padding:48px 24px 24px;
+    text-align:center;
+    position:relative;
+}
+
+header h1{
+    font-size:34px;
+    margin:0;
+    font-weight:700;
+}
+
+header p{
+    margin:10px auto 0;
+    max-width:680px;
+    color:var(--muted);
+    font-size:16px;
+}
+
+/* ---------- DARK MODE TOGGLE ---------- */
+.toggle{
+    position:absolute;
+    top:20px;
+    right:24px;
+}
+.toggle button{
+    background:var(--card);
+    color:var(--text);
+    border:1px solid var(--muted);
+    border-radius:999px;
+    padding:6px 14px;
+    cursor:pointer;
+    font-size:13px;
+}
+.toggle button:hover{
+    border-color:var(--primary);
+}
+
+/* ================= GRID ================= */
+main{
+    max-width:1100px;
+    margin:auto;
+    padding:32px 24px 64px;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+    gap:28px;
+}
+
+/* ================= CARD ================= */
+.card{
+    background:var(--card);
+    border-radius:var(--radius);
+    padding:28px 24px;
+    box-shadow:var(--shadow);
+    cursor:pointer;
+    position:relative;
+    transition:transform .25s ease, box-shadow .25s ease;
+}
+
+.card:hover{
+    transform:translateY(-6px);
+    box-shadow:0 18px 40px rgba(0,0,0,.15);
+}
+
+.card h2{
+    margin:0 0 8px;
+    font-size:20px;
+}
+
+.card p{
+    margin:0;
+    font-size:14px;
+    color:var(--muted);
+    line-height:1.5;
+}
+
+.card span{
+    display:inline-block;
+    margin-top:16px;
+    font-size:13px;
+    font-weight:600;
+    color:var(--primary);
+}
+
+/* ================= FOOTER ================= */
+footer{
+    text-align:center;
+    padding:24px;
+    font-size:13px;
+    color:var(--muted);
+}
+
+/* ================= ACCESSIBILITY ================= */
+.card:focus-visible{
+    outline:3px solid var(--primary);
+    outline-offset:4px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="toggle">
+        <button onclick="toggleTheme()">🌙 /☀️</button>
+    </div>
+
+    <h1>Compliance Automation</h1>
+    <p>
+        Welcome to Marv & Co’s document automation suite.  
+        Select a module below to generate statutory documents efficiently.
+    </p>
+</header>
+
+<main>
+    <div class="grid">
+
+        <div class="card" tabindex="0" onclick="go('agm.html')">
+            <h2>AGM</h2>
+            <p>
+                AGM notices, resolutions and meeting-related statutory documents.
+            </p>
+            <span>Open →</span>
+        </div>
+
+        <div class="card" tabindex="0" onclick="go('directors-report.html')">
+            <h2>Directors’ Report</h2>
+            <p>
+                Fully automated Directors’ Report with placeholders and disclosures.
+            </p>
+            <span>Open →</span>
+        </div>
+
+        <div class="card" tabindex="0" onclick="go('DIRSH.html')">
+            <h2>Shareholders and Directors</h2>
+            <p>
+                Shareholding structure, registers, Director master, DIN, designation and signatory automation..
+            </p>
+            <span>Open →</span>
+        </div>
+
+    </div>
+</main>
+
+<footer>
+    © 2025 Marv & Co — Chartered Accountants
+</footer>
+
+<script>
+/* ============ NAVIGATION ============ */
+function go(file){
+    window.location.href = file;
+}
+
+/* ============ DARK MODE ============ */
+const root = document.documentElement;
+const savedTheme = localStorage.getItem("theme");
+
+if(savedTheme){
+    root.setAttribute("data-theme", savedTheme);
+}
+
+function toggleTheme(){
+    const current = root.getAttribute("data-theme");
+    const next = current === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    localStorage.setItem("theme", next);
+}
+</script>
+
+</body>
+</html>
